@@ -1,7 +1,7 @@
 const { GraphQLString, GraphQLID } = require("graphql");
-const { User, Post } = require("../models");
+const { User, Post, Comment } = require("../models");
 const { createJWT } = require("../util/auth");
-const { PostType } = require("./types");
+const { PostType, CommentType } = require("./types");
 
 const register = {
   type: GraphQLString,
@@ -98,9 +98,94 @@ const updatePost = {
   },
 };
 
+const deletePost = {
+  type: GraphQLString,
+  description: "Delete a post",
+  args: {
+    postId: { type: GraphQLID },
+  },
+  async resolve(_, { postId }, { verifiedUser }) {
+    if (!verifiedUser) throw new Error("Unauthorized");
+
+    const deletedPost = await Post.findByIdAndDelete({
+      _id: postId,
+      authorId: verifiedUser._id,
+    });
+
+    if (!deletedPost) throw new Error("Post not found");
+
+    return "Post deleted";
+  },
+};
+
+const addComment = {
+  type: CommentType,
+  description: "Add a comment to a post",
+  args: {
+    comment: { type: GraphQLString },
+    postId: { type: GraphQLID },
+  },
+  async resolve(_, { comment, postId }, { verifiedUser }) {
+    const newComment = new Comment({
+      comment,
+      postId,
+      userId: verifiedUser._id,
+    });
+
+    return newComment.save();
+  },
+};
+
+const updateComment = {
+  type: CommentType,
+  description: "Update a comment",
+  args: {
+    id: { type: GraphQLID },
+    comment: { type: GraphQLString },
+  },
+  async resolve(_, { id, comment }, { verifiedUser }) {
+    if (!verifiedUser) throw new Error("Unauthorized");
+
+    const updatedComment = await Comment.findByIdAndUpdate(
+      { _id: id, userId: verifiedUser._id },
+      {
+        comment,
+      }
+    );
+
+    if (!updatedComment) throw new Error("Comment not found");
+
+    return updatedComment;
+  },
+};
+
+const deleteComment = {
+  type: GraphQLString,
+  description: "Delete a comment by id",
+  args: {
+    id: { type: GraphQLID },
+  },
+  async resolve(_, { id }, { verifiedUser }) {
+    if (!verifiedUser) throw new Error("Unauthorized");
+
+    const deletedComment = await Comment.findOneAndDelete({
+      _id: id,
+      userId: verifiedUser._id,
+    });
+
+    if (!deletedComment) throw new Error("Comment not found");
+
+    return "Comment deleted";
+  },
+};
+
 module.exports = {
   register,
   login,
   createPost,
   updatePost,
+  deletePost,
+  addComment,
+  updateComment,
+  deleteComment,
 };

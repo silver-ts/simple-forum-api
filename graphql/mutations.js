@@ -1,4 +1,4 @@
-const { GraphQLString } = require("graphql");
+const { GraphQLString, GraphQLID } = require("graphql");
 const { User, Post } = require("../models");
 const { createJWT } = require("../util/auth");
 const { PostType } = require("./types");
@@ -44,8 +44,6 @@ const login = {
   async resolve(_, args) {
     const user = await User.findOne({ email: args.email }).select("+password");
 
-    console.log(user);
-
     if (!user || args.password !== user.password)
       throw new Error("Invalid Credentials");
 
@@ -66,14 +64,37 @@ const createPost = {
     title: { type: GraphQLString },
     body: { type: GraphQLString },
   },
-  async resolve(_, args) {
+  async resolve(_, args, { verifiedUser }) {
     const post = new Post({
       title: args.title,
       body: args.body,
-      authorId: "62d73ebf6f2b3fa4a6e9b541",
+      authorId: verifiedUser._id,
     });
 
+    await post.save();
+
     return post;
+  },
+};
+
+const updatePost = {
+  type: PostType,
+  description: "Update a post",
+  args: {
+    id: { type: GraphQLID },
+    title: { type: GraphQLString },
+    body: { type: GraphQLString },
+  },
+  async resolve(_, { id, title, body }, { verifiedUser }) {
+    if (!verifiedUser) throw new Error("Unauthorized");
+
+    const updatedPost = await Post.findOneAndUpdate(
+      { _id: id, authorId: verifiedUser._id },
+      { title, body },
+      { new: true, runValidators: true }
+    );
+
+    return updatedPost;
   },
 };
 
@@ -81,4 +102,5 @@ module.exports = {
   register,
   login,
   createPost,
+  updatePost,
 };

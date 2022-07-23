@@ -22,7 +22,7 @@ const user = {
 const posts = {
   type: new GraphQLList(PostType),
   description: "Get all posts",
-  resolve: () => Post.find(),
+  resolve: () => Post.find().sort({ createdAt: "desc" }),
 };
 
 const post = {
@@ -38,7 +38,8 @@ const comments = {
   type: new GraphQLList(CommentType),
   description: "Get all comments by post id",
   args: { postId: { type: GraphQLID } },
-  resolve: (_, { postId }) => Comment.find({ postId }),
+  resolve: (_, { postId }) =>
+    Comment.find({ postId }).sort({ createdAt: "desc" }),
 };
 
 const comment = {

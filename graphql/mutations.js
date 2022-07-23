@@ -1,10 +1,10 @@
 const { GraphQLString, GraphQLID } = require("graphql");
 const { User, Post, Comment } = require("../models");
 const { createJWT } = require("../util/auth");
-const { PostType, CommentType } = require("./types");
+const { PostType, CommentType, AuthenticatedUserType } = require("./types");
 
 const register = {
-  type: GraphQLString,
+  type: AuthenticatedUserType,
   description: "Register a new user and returns a token",
   args: {
     username: { type: GraphQLString },
@@ -30,12 +30,12 @@ const register = {
       email: user.email,
     });
 
-    return token;
+    return { user: user, token: token };
   },
 };
 
 const login = {
-  type: GraphQLString,
+  type: AuthenticatedUserType,
   description: "Login a user and return a token",
   args: {
     email: { type: GraphQLString },
@@ -53,7 +53,10 @@ const login = {
       email: user.email,
     });
 
-    return token;
+    return {
+      user: user,
+      token: token,
+    };
   },
 };
 

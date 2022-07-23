@@ -66,8 +66,18 @@ const CommentType = new GraphQLObjectType({
   },
 });
 
+const AuthenticatedUserType = new GraphQLObjectType({
+  name: "AuthenticatedUserType",
+  description: "The authenticated user type",
+  fields: {
+    user: { type: UserType },
+    token: { type: GraphQLString },
+  },
+});
+
 module.exports = {
   UserType,
   PostType,
   CommentType,
+  AuthenticatedUserType,
 };

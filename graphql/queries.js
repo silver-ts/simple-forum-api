@@ -1,4 +1,4 @@
-const { GraphQLList, GraphQLID } = require("graphql");
+const { GraphQLList, GraphQLID, GraphQLInt } = require("graphql");
 const { UserType, PostType, CommentType } = require("./types");
 const { User, Post, Comment } = require("../models");
 
@@ -22,7 +22,12 @@ const user = {
 const posts = {
   type: new GraphQLList(PostType),
   description: "Get all posts",
-  resolve: () => Post.find().sort({ createdAt: "desc" }),
+  args: {
+    offset: { type: GraphQLInt },
+    limit: { type: GraphQLInt },
+  },
+  resolve: (_, args) =>
+    Post.find().sort({ createdAt: "desc" }).limit(args.limit).skip(args.offset),
 };
 
 const post = {
@@ -37,9 +42,16 @@ const post = {
 const comments = {
   type: new GraphQLList(CommentType),
   description: "Get all comments by post id",
-  args: { postId: { type: GraphQLID } },
-  resolve: (_, { postId }) =>
-    Comment.find({ postId }).sort({ createdAt: "desc" }),
+  args: {
+    postId: { type: GraphQLID },
+    offset: { type: GraphQLInt },
+    limit: { type: GraphQLInt },
+  },
+  resolve: (_, { postId, limit, offset }) =>
+    Comment.find({ postId })
+      .sort({ createdAt: "desc" })
+      .limit(limit)
+      .skip(offset),
 };
 
 const comment = {

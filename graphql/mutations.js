@@ -15,6 +15,19 @@ const register = {
   async resolve(_, args) {
     const { username, email, password, displayName } = args;
 
+    if (
+      (args.email.length || args.username.length || args.displayName.length) <
+        3 ||
+      args.password.length < 6
+    )
+      throw new Error("One the camps is too short");
+    if (
+      (args.email.length || args.username.length || args.displayName.length) >
+        75 ||
+      args.password.length > 50
+    )
+      throw new Error("One of the camps is too long");
+
     const user = new User({
       username,
       email,
@@ -46,6 +59,16 @@ const login = {
 
     if (!user || args.password !== user.password)
       throw new Error("Invalid Credentials");
+
+    if (args.email.length < 3)
+      throw new Error("E-mail too short (Minimum of 3)");
+    if (args.email.length > 75)
+      throw new Error("E-mail too big (Maximum of 75)");
+
+    if (args.password.length < 6)
+      throw new Error("Password too short (Minimum of 6)");
+    if (args.password.length > 50)
+      throw new Error("Password too big (Maximum of 50)");
 
     const token = createJWT({
       _id: user._id,

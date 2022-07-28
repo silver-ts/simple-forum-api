@@ -115,10 +115,10 @@ const updatePost = {
   async resolve(_, { id, title, body }, { verifiedUser }) {
     if (!verifiedUser) throw new Error("Unauthorized");
 
-    if (args.title.length < 4 || args.body.length < 4)
+    if (title.length < 4 || body.length < 4)
       throw new Error("One of the fields is too short");
 
-    if (args.title.length > 300 || args.body.length > 40000)
+    if (title.length > 300 || body.length > 40000)
       throw new Error("One of the fields is too long");
 
     const updatedPost = await Post.findOneAndUpdate(

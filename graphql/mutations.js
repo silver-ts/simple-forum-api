@@ -16,17 +16,15 @@ const register = {
     const { username, email, password, displayName } = args;
 
     if (
-      (args.email.length || args.username.length || args.displayName.length) <
-        3 ||
-      args.password.length < 6
+      (email.length || username.length || displayName.length) < 3 ||
+      password.length < 6
     )
-      throw new Error("One the camps is too short");
+      throw new Error("One the fields is too short");
     if (
-      (args.email.length || args.username.length || args.displayName.length) >
-        75 ||
-      args.password.length > 50
+      (email.length || username.length || displayName.length) > 75 ||
+      password.length > 50
     )
-      throw new Error("One of the camps is too long");
+      throw new Error("One of the fields is too long");
 
     const user = new User({
       username,
@@ -55,20 +53,15 @@ const login = {
     password: { type: GraphQLString },
   },
   async resolve(_, args) {
+    if (args.email.length < 3 || args.password.length < 6)
+      throw new Error("One of the fields is too short");
+    if (args.email.length > 75 || args.password.length > 50)
+      throw new Error("One of the fields is too long");
+
     const user = await User.findOne({ email: args.email }).select("+password");
 
     if (!user || args.password !== user.password)
       throw new Error("Invalid Credentials");
-
-    if (args.email.length < 3)
-      throw new Error("E-mail too short (Minimum of 3)");
-    if (args.email.length > 75)
-      throw new Error("E-mail too big (Maximum of 75)");
-
-    if (args.password.length < 6)
-      throw new Error("Password too short (Minimum of 6)");
-    if (args.password.length > 50)
-      throw new Error("Password too big (Maximum of 50)");
 
     const token = createJWT({
       _id: user._id,
@@ -91,6 +84,14 @@ const createPost = {
     body: { type: GraphQLString },
   },
   async resolve(_, args, { verifiedUser }) {
+    if (!verifiedUser) throw new Error("Unauthorized");
+
+    if (args.title.length < 4 || args.body.length < 4)
+      throw new Error("One of the fields is too short");
+
+    if (args.title.length > 300 || args.body.length > 40000)
+      throw new Error("One of the fields is too long");
+
     const post = new Post({
       title: args.title,
       body: args.body,
@@ -113,6 +114,12 @@ const updatePost = {
   },
   async resolve(_, { id, title, body }, { verifiedUser }) {
     if (!verifiedUser) throw new Error("Unauthorized");
+
+    if (args.title.length < 4 || args.body.length < 4)
+      throw new Error("One of the fields is too short");
+
+    if (args.title.length > 300 || args.body.length > 40000)
+      throw new Error("One of the fields is too long");
 
     const updatedPost = await Post.findOneAndUpdate(
       { _id: id, authorId: verifiedUser._id },
@@ -152,6 +159,8 @@ const addComment = {
     postId: { type: GraphQLID },
   },
   async resolve(_, { comment, postId }, { verifiedUser }) {
+    if (!verifiedUser) throw new Error("Unauthorized");
+
     const newComment = new Comment({
       comment,
       postId,
